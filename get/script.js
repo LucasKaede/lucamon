@@ -25,15 +25,15 @@ window.onload = (e) => {
             let code = jsQR(img.data, img.width, img.height, { inversionAttempts: "dontInvert" });
 
             if (code) {
+                console.log("QRコードが検出されました: ", code.data); // QRコードのデータをログ
                 drawRect(code.location); // QRコードの場所に矩形を描画
                 msg.innerText = `QRコードを検出しました: ${code.data}`; // QRコードのデータを表示
                 
                 // QRコードのスキャンが成功した時の追加リアクション
                 showSuccessReaction(code.data);
-                console.log("QRコードのデータ:", code.data); // デバッグ用ログ
             } else {
-                msg.innerText = "QRコードを検出中...";
                 console.log("QRコードが見つかりません。再試行中..."); // デバッグ用ログ
+                msg.innerText = "QRコードを検出中...";
             }
         } else {
             console.log("ビデオのデータがまだ十分ではありません。"); // デバッグ用ログ
