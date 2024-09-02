@@ -1,66 +1,57 @@
-document.getElementById("start-camera").addEventListener("click", function() {
-    const video = document.getElementById("camera-preview");
-    const canvas = document.getElementById("qr-canvas");
-    const context = canvas.getContext("2d");
+window.onload = (e) => {
+    let video = document.createElement("video");
+    let canvas = document.getElementById("canvas");
+    let ctx = canvas.getContext("2d");
+    let msg = document.getElementById("msg");
 
-    // カメラのストリームを取得
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-    .then(function(stream) {
+    const userMedia = { video: { facingMode: "environment" } };
+    navigator.mediaDevices.getUserMedia(userMedia).then((stream) => {
         video.srcObject = stream;
-        video.setAttribute("playsinline", true); // iOS用の設定
+        video.setAttribute("playsinline", true); // iOS対応
         video.play();
-        requestAnimationFrame(scanQRCode);
-    }).catch(function(err) {
+        startTick();
+    }).catch((err) => {
         console.error("カメラのアクセスに失敗しました: ", err);
+        msg.innerText = "カメラのアクセスに失敗しました。";
     });
 
-    function scanQRCode() {
+    function startTick() {
+        msg.innerText = "ビデオを読み込んでいます...";
         if (video.readyState === video.HAVE_ENOUGH_DATA) {
-            // ビデオのフレームサイズに合わせてキャンバスのサイズを設定
-            canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-            const code = jsQR(imageData.data, imageData.width, imageData.height);
+            canvas.width = video.videoWidth;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            let img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            let code = jsQR(img.data, img.width, img.height, { inversionAttempts: "dontInvert" });
 
             if (code) {
-                console.log("QRコード検出: ", code.data);
-                handleQRCode(code.data);
-                stopVideoStream();
+                drawRect(code.location); // QRコードの場所に矩形を描画
+                msg.innerText = `QRコードを検出しました: ${code.data}`; // QRコードのデータを表示
+                
+                // QRコードのスキャンが成功した時の追加リアクション
                 showSuccessReaction(code.data);
-                return;
+                
             } else {
-                console.log("QRコードが検出されませんでした");
+                msg.innerText = "QRコードを検出中...";
             }
         }
-        requestAnimationFrame(scanQRCode);
+        setTimeout(startTick, 250);
     }
 
-    function handleQRCode(url) {
-        // URLから数値を取得し、101までの整数に変換する関数
-        const number = convertURLToNumber(url);
-
-        // 画像を表示する
-        const imgElement = document.getElementById("display-image");
-        imgElement.src = `images/${number}.jpg`;
+    function drawRect(location) {
+        drawLine(location.topLeftCorner, location.topRightCorner);
+        drawLine(location.topRightCorner, location.bottomRightCorner);
+        drawLine(location.bottomRightCorner, location.bottomLeftCorner);
+        drawLine(location.bottomLeftCorner, location.topLeftCorner);
     }
 
-    function convertURLToNumber(url) {
-        // URLを整数に変換する簡単な例
-        let sum = 0;
-        for (let i = 0; i < url.length; i++) {
-            sum += url.charCodeAt(i);
-        }
-        return (sum % 101) + 1; // 1から101の間の数値に変換
-    }
-
-    function stopVideoStream() {
-        // カメラストリームを停止
-        const stream = video.srcObject;
-        const tracks = stream.getTracks();
-        tracks.forEach(track => track.stop());
-        video.srcObject = null;
+    function drawLine(begin, end) {
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = "#FF3B58";
+        ctx.beginPath();
+        ctx.moveTo(begin.x, begin.y);
+        ctx.lineTo(end.x, end.y);
+        ctx.stroke();
     }
 
     function showSuccessReaction(data) {
@@ -68,12 +59,12 @@ document.getElementById("start-camera").addEventListener("click", function() {
         alert("QRコードが正常にスキャンされました: " + data);
         
         // 成功メッセージを表示
-        const resultDiv = document.getElementById("result");
-        const successMessage = document.createElement("p");
-        successMessage.textContent = "QRコードが正常にスキャンされました!";
-        resultDiv.appendChild(successMessage);
+        let successMessage = document.createElement("p");
+        successMessage.textContent = "QRコードのスキャンに成功しました!";
+        successMessage.style.color = "green";
+        document.body.appendChild(successMessage);
         
         // 背景色を変更
-        document.body.style.backgroundColor = "#d4edda"; // 緑色の背景色（成功の視覚的フィードバック）
+        document.body.style.backgroundColor = "#d4edda"; // 成功の視覚的フィードバック
     }
-});
+}
