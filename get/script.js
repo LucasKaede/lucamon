@@ -1,4 +1,4 @@
-window.onload = (e) => {
+window.onload = () => {
     let video = document.getElementById("video");
     let canvas = document.createElement("canvas");
     let ctx = canvas.getContext("2d");
@@ -15,20 +15,24 @@ window.onload = (e) => {
     });
 
     function startCamera() {
-        const userMedia = { video: { facingMode: "environment" } };
-        navigator.mediaDevices.getUserMedia(userMedia).then((stream) => {
-            video.srcObject = stream;
-            video.setAttribute("playsinline", true); // iOS対応
-            video.play();
-            startTick();
-        }).catch((err) => {
-            console.error("カメラのアクセスに失敗しました: ", err);
-            msg.innerText = "カメラのアクセスに失敗しました。";
-        });
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+            .then((stream) => {
+                video.srcObject = stream;
+                video.setAttribute("playsinline", true); // iOS対応
+                video.play();
+                isScanning = true;
+                startTick();
+            })
+            .catch((err) => {
+                console.error("カメラのアクセスに失敗しました: ", err);
+                msg.innerText = "カメラのアクセスに失敗しました。";
+                startButton.disabled = false;
+            });
     }
 
     function startTick() {
-        msg.innerText = "ビデオを読み込んでいます...";
+        if (!isScanning) return;
+
         if (video.readyState === video.HAVE_ENOUGH_DATA) {
             canvas.height = video.videoHeight;
             canvas.width = video.videoWidth;
@@ -44,12 +48,10 @@ window.onload = (e) => {
                 // QRコードのスキャンが成功した時の追加リアクション
                 showSuccessReaction(code.data);
             } else {
-                console.log("QRコードが見つかりません。再試行中..."); // デバッグ用ログ
                 msg.innerText = "QRコードを検出中...";
             }
-        } else {
-            console.log("ビデオのデータがまだ十分ではありません。"); // デバッグ用ログ
         }
+
         setTimeout(startTick, 250);
     }
 
@@ -70,18 +72,11 @@ window.onload = (e) => {
     }
 
     function showSuccessReaction(data) {
-        // QRコードのデータに基づく画像を表示
         let imageUrl = `images/${data}.jpg`; // QRコードのデータに基づく画像のURL
         resultImage.src = imageUrl;
         resultImage.style.display = "block";
-        
-        // 成功メッセージを表示
         msg.innerText = "QRコードのスキャンに成功しました!";
-        
-        // 背景色を変更
         document.body.style.backgroundColor = "#d4edda"; // 成功の視覚的フィードバック
-        
-        // 起動ボタンを再度有効化
         startButton.disabled = false;
     }
 }
