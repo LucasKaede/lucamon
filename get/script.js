@@ -30,10 +30,13 @@ window.onload = (e) => {
                 
                 // QRコードのスキャンが成功した時の追加リアクション
                 showSuccessReaction(code.data);
-                
+                console.log("QRコードのデータ:", code.data); // デバッグ用ログ
             } else {
                 msg.innerText = "QRコードを検出中...";
+                console.log("QRコードが見つかりません。再試行中..."); // デバッグ用ログ
             }
+        } else {
+            console.log("ビデオのデータがまだ十分ではありません。"); // デバッグ用ログ
         }
         setTimeout(startTick, 250);
     }
