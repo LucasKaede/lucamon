@@ -7,22 +7,30 @@ document.getElementById("start-camera").addEventListener("click", function() {
     navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
     .then(function(stream) {
         video.srcObject = stream;
-        video.setAttribute("playsinline", true);
+        video.setAttribute("playsinline", true); // iOS用の設定
         video.play();
         requestAnimationFrame(scanQRCode);
+    }).catch(function(err) {
+        console.error("カメラのアクセスに失敗しました: ", err);
     });
 
     function scanQRCode() {
         if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            // ビデオのフレームサイズに合わせてキャンバスのサイズを設定
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
             const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
             const code = jsQR(imageData.data, imageData.width, imageData.height);
 
             if (code) {
+                console.log("QRコード検出: ", code.data);
                 handleQRCode(code.data);
+                stopVideoStream();
                 return;
+            } else {
+                console.log("QRコードが検出されませんでした");
             }
         }
         requestAnimationFrame(scanQRCode);
@@ -44,5 +52,13 @@ document.getElementById("start-camera").addEventListener("click", function() {
             sum += url.charCodeAt(i);
         }
         return (sum % 101) + 1; // 1から101の間の数値に変換
+    }
+
+    function stopVideoStream() {
+        // カメラストリームを停止
+        const stream = video.srcObject;
+        const tracks = stream.getTracks();
+        tracks.forEach(track => track.stop());
+        video.srcObject = null;
     }
 });
