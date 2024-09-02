@@ -6,9 +6,53 @@
     <title>QR Code Scanner</title>
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <script src="script.js" defer></script>
+    <style>
+        #videoContainer {
+            position: relative;
+            width: 100%;
+            max-width: 640px;
+            margin: auto;
+        }
+        #video {
+            width: 100%;
+            display: block;
+        }
+        #canvas {
+            display: none;
+        }
+        #msg {
+            text-align: center;
+            font-size: 18px;
+            margin-top: 10px;
+        }
+        #resultImage {
+            display: none;
+            max-width: 100%;
+            margin-top: 10px;
+            border: 2px solid #000;
+        }
+        #startButton {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #startButton:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
-    <canvas id="canvas" style="display: none;"></canvas>
+    <button id="startButton">カメラを起動</button>
+    <div id="videoContainer">
+        <video id="video" autoplay></video>
+    </div>
     <div id="msg">QRコードをスキャンしてください</div>
+    <img id="resultImage" alt="QRコードに関連する画像">
 </body>
 </html>
