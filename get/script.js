@@ -28,6 +28,7 @@ document.getElementById("start-camera").addEventListener("click", function() {
                 console.log("QRコード検出: ", code.data);
                 handleQRCode(code.data);
                 stopVideoStream();
+                showSuccessReaction(code.data);
                 return;
             } else {
                 console.log("QRコードが検出されませんでした");
@@ -60,5 +61,19 @@ document.getElementById("start-camera").addEventListener("click", function() {
         const tracks = stream.getTracks();
         tracks.forEach(track => track.stop());
         video.srcObject = null;
+    }
+
+    function showSuccessReaction(data) {
+        // アラートを表示
+        alert("QRコードが正常にスキャンされました: " + data);
+        
+        // 成功メッセージを表示
+        const resultDiv = document.getElementById("result");
+        const successMessage = document.createElement("p");
+        successMessage.textContent = "QRコードが正常にスキャンされました!";
+        resultDiv.appendChild(successMessage);
+        
+        // 背景色を変更
+        document.body.style.backgroundColor = "#d4edda"; // 緑色の背景色（成功の視覚的フィードバック）
     }
 });
