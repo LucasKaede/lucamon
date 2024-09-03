@@ -6,6 +6,7 @@ window.onload = () => {
     let resultImage = document.getElementById("resultImage");
     let startButton = document.getElementById("startButton");
     let isScanning = false;
+    let stream = null;
 
     startButton.addEventListener("click", () => {
         if (!isScanning) {
@@ -16,7 +17,8 @@ window.onload = () => {
 
     function startCamera() {
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-            .then((stream) => {
+            .then((mediaStream) => {
+                stream = mediaStream;
                 video.srcObject = stream;
                 video.setAttribute("playsinline", true); // iOS対応
                 video.play();
@@ -137,7 +139,13 @@ window.onload = () => {
         resultImage.style.display = "block";
         msg.innerText = `ポケモン: ${japaneseName} (#${pokemonData.id})`;
         document.body.style.backgroundColor = "#d4edda";
+        
+        // カメラをオフにする
+        if (stream) {
+            let tracks = stream.getTracks();
+            tracks.forEach(track => track.stop());
+        }
+        isScanning = false;
         startButton.disabled = false;
     }
 }
-
