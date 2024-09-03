@@ -83,26 +83,14 @@ window.onload = () => {
         // カメラを停止
         stopCamera();
 
-        // ポケAPIからポケモンの情報を取得
-        fetch(`https://pokeapi.co/api/v2/pokemon/${number}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`ポケモンの画像取得に失敗しました。ステータスコード: ${response.status}`);
-                }
-                return response.json();
-            })
+        // ポケAPIからポケモンの情報を取得（リトライ機能付き）
+        fetchWithRetry(`https://pokeapi.co/api/v2/pokemon/${number}`, 3)
             .then(pokemonData => {
                 // ポケモンの画像URLを取得
                 let pokeImage = pokemonData.sprites.front_default;
 
                 // ポケAPIからポケモンの日本語の名前を取得
-                fetch(`https://pokeapi.co/api/v2/pokemon-species/${number}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`ポケモンの日本語名取得に失敗しました。ステータスコード: ${response.status}`);
-                        }
-                        return response.json();
-                    })
+                fetchWithRetry(`https://pokeapi.co/api/v2/pokemon-species/${number}`, 3)
                     .then(pokemonSpeciesData => {
                         // 日本語の名前を取得
                         let pokeName = pokemonSpeciesData.names.find(name => name.language.name === "ja").name;
@@ -131,5 +119,28 @@ window.onload = () => {
             stream.getTracks().forEach(track => track.stop());
             isScanning = false;
         }
+    }
+
+    function fetchWithRetry(url, retries) {
+        return fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    if (retries > 1) {
+                        console.log(`再試行中: ${url} 残り回数: ${retries - 1}`);
+                        return fetchWithRetry(url, retries - 1);
+                    } else {
+                        throw new Error(`HTTPエラー: ${response.status}`);
+                    }
+                }
+                return response.json();
+            })
+            .catch(err => {
+                if (retries > 1) {
+                    console.log(`再試行中: ${url} 残り回数: ${retries - 1}`);
+                    return fetchWithRetry(url, retries - 1);
+                } else {
+                    throw err;
+                }
+            });
     }
 }
