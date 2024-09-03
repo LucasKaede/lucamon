@@ -46,7 +46,7 @@ window.onload = () => {
                 console.log("QRコードが検出されました: ", code.data); // QRコードのデータをログ
                 drawRect(code.location); // QRコードの場所に矩形を描画
                 msg.innerText = `QRコードを検出しました: ${code.data}`; // QRコードのデータを表示
-                
+
                 // QRコードのスキャンが成功した時の追加リアクション
                 handleQRCodeData(code.data);
             } else {
@@ -77,6 +77,12 @@ window.onload = () => {
         // QRコードのデータから1から151の間の整数を取得
         let number = Math.floor(Math.abs(parseInt(data)) % 151) + 1;
 
+        // ポップアップを表示
+        alert("野生のポケモンがあらわれた！");
+
+        // カメラを停止
+        stopCamera();
+
         // ポケAPIからポケモンの情報を取得
         fetch(`https://pokeapi.co/api/v2/pokemon/${number}`)
             .then(response => {
@@ -105,7 +111,6 @@ window.onload = () => {
                         resultImage.src = pokeImage;
                         resultImage.style.display = "block";
                         msg.innerText = `ポケモン: ${pokeName}`;
-                        stopCamera(); // QRコードをスキャンした後にカメラを停止
                         startButton.disabled = false;
                     })
                     .catch(err => {
