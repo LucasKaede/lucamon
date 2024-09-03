@@ -26,10 +26,13 @@
             margin-top: 10px;
         }
         #resultImage {
-            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
-            height: auto;
-            margin-top: 10px;
+            height: 100%;
+            object-fit: cover;
+            display: none;
             border: 2px solid #000;
         }
         #startButton {
@@ -46,20 +49,14 @@
         #startButton:hover {
             background-color: #0056b3;
         }
-        @media (max-width: 600px) {
-            #resultImage {
-                width: 90%;
-                height: auto;
-            }
-        }
     </style>
 </head>
 <body>
     <button id="startButton">カメラを起動</button>
     <div id="videoContainer">
         <video id="video" autoplay></video>
+        <img id="resultImage" alt="QRコードに関連する画像">
     </div>
     <div id="msg">QRコードをスキャンしてください</div>
-    <img id="resultImage" alt="QRコードに関連する画像">
 </body>
 </html>
