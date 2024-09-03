@@ -79,14 +79,24 @@ window.onload = () => {
 
         // ポケAPIからポケモンの情報を取得
         fetch(`https://pokeapi.co/api/v2/pokemon/${number}`)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`ポケモンの画像取得に失敗しました。ステータスコード: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(pokemonData => {
                 // ポケモンの画像URLを取得
                 let pokeImage = pokemonData.sprites.front_default;
 
                 // ポケAPIからポケモンの日本語の名前を取得
-                fetch(`https://pokeapi.co/api/v2/pokemon-species/${number}`)
-                    .then(response => response.json())
+                return fetch(`https://pokeapi.co/api/v2/pokemon-species/${number}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`ポケモンの日本語名取得に失敗しました。ステータスコード: ${response.status}`);
+                        }
+                        return response.json();
+                    })
                     .then(pokemonSpeciesData => {
                         // 日本語の名前を取得
                         let pokeName = pokemonSpeciesData.names.find(name => name.language.name === "ja").name;
@@ -97,16 +107,11 @@ window.onload = () => {
                         msg.innerText = `ポケモン: ${pokeName}`;
                         stopCamera(); // QRコードをスキャンした後にカメラを停止
                         startButton.disabled = false;
-                    })
-                    .catch(err => {
-                        console.error("ポケAPIからポケモンの日本語名を取得する際にエラーが発生しました: ", err);
-                        msg.innerText = "ポケモンの名前情報の取得に失敗しました。";
-                        startButton.disabled = false;
                     });
             })
             .catch(err => {
-                console.error("ポケAPIからポケモンの画像を取得する際にエラーが発生しました: ", err);
-                msg.innerText = "ポケモン画像の取得に失敗しました。";
+                console.error("ポケAPIからポケモンの情報を取得する際にエラーが発生しました: ", err);
+                msg.innerText = "ポケモン情報の取得に失敗しました。";
                 startButton.disabled = false;
             });
     }
