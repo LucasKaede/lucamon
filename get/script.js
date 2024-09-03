@@ -46,7 +46,7 @@ window.onload = () => {
                 msg.innerText = `QRコードを検出しました: ${code.data}`; // QRコードのデータを表示
                 
                 // QRコードのスキャンが成功した時の追加リアクション
-                showSuccessReaction(code.data);
+                handleQRCodeData(code.data);
             } else {
                 msg.innerText = "QRコードを検出中...";
             }
@@ -71,12 +71,28 @@ window.onload = () => {
         ctx.stroke();
     }
 
-    function showSuccessReaction(data) {
-        let imageUrl = `images/${data}.jpg`; // QRコードのデータに基づく画像のURL
-        resultImage.src = imageUrl;
-        resultImage.style.display = "block";
-        msg.innerText = "QRコードのスキャンに成功しました!";
-        document.body.style.backgroundColor = "#d4edda"; // 成功の視覚的フィードバック
-        startButton.disabled = false;
+    function handleQRCodeData(data) {
+        // QRコードのデータから1から151の間の整数を取得
+        let number = Math.floor(Math.abs(parseInt(data)) % 151) + 1;
+
+        // ポケAPIからポケモンの情報を取得
+        fetch(`https://pokeapi.co/api/v2/pokemon/${number}`)
+            .then(response => response.json())
+            .then(pokemonData => {
+                // 日本語の名前と画像URLを取得
+                let pokeName = pokemonData.names.find(name => name.language.name === "ja").name;
+                let pokeImage = pokemonData.sprites.front_default;
+
+                // ページにポケモンの情報を表示
+                resultImage.src = pokeImage;
+                resultImage.style.display = "block";
+                msg.innerText = `ポケモン: ${pokeName}`;
+                startButton.disabled = false;
+            })
+            .catch(err => {
+                console.error("ポケAPIからポケモンの情報を取得する際にエラーが発生しました: ", err);
+                msg.innerText = "ポケモン情報の取得に失敗しました。";
+                startButton.disabled = false;
+            });
     }
-}
+                 }
