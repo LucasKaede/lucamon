@@ -140,3 +140,4 @@ window.onload = () => {
         startButton.disabled = false;
     }
 }
+
