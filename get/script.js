@@ -74,6 +74,7 @@ window.onload = () => {
     }
 
     function showSuccessReaction(data) {
+        alert("野生のポケモンがあらわれた！"); // ポケモン出現のアラート
         let id = convertToPokemonID(data);
         fetchPokemonData(id);
     }
