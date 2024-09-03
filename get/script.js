@@ -6,6 +6,7 @@ window.onload = () => {
     let resultImage = document.getElementById("resultImage");
     let startButton = document.getElementById("startButton");
     let isScanning = false;
+    let stream; // カメラストリームを保持するための変数
 
     startButton.addEventListener("click", () => {
         if (!isScanning) {
@@ -16,7 +17,8 @@ window.onload = () => {
 
     function startCamera() {
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-            .then((stream) => {
+            .then((s) => {
+                stream = s; // ストリームを保存
                 video.srcObject = stream;
                 video.setAttribute("playsinline", true); // iOS対応
                 video.play();
@@ -76,18 +78,25 @@ window.onload = () => {
         let number = Math.floor(Math.abs(parseInt(data)) % 151) + 1;
 
         // ポケAPIからポケモンの情報を取得
-        fetch(`https://pokeapi.co/api/v2/pokemon/${number}`)
+        fetch(`https://pokeapi.co/api/v2/pokemon-species/${number}`)
             .then(response => response.json())
-            .then(pokemonData => {
-                // 日本語の名前と画像URLを取得
-                let pokeName = pokemonData.names.find(name => name.language.name === "ja").name;
-                let pokeImage = pokemonData.sprites.front_default;
-
-                // ページにポケモンの情報を表示
-                resultImage.src = pokeImage;
-                resultImage.style.display = "block";
-                msg.innerText = `ポケモン: ${pokeName}`;
-                startButton.disabled = false;
+            .then(pokemonSpeciesData => {
+                // 日本語の名前を取得
+                let pokeName = pokemonSpeciesData.names.find(name => name.language.name === "ja").name;
+                
+                // ポケモンの画像を取得
+                return fetch(`https://pokeapi.co/api/v2/pokemon/${number}`)
+                    .then(response => response.json())
+                    .then(pokemonData => {
+                        let pokeImage = pokemonData.sprites.front_default;
+                        
+                        // ページにポケモンの情報を表示
+                        resultImage.src = pokeImage;
+                        resultImage.style.display = "block";
+                        msg.innerText = `ポケモン: ${pokeName}`;
+                        stopCamera(); // QRコードをスキャンした後にカメラを停止
+                        startButton.disabled = false;
+                    });
             })
             .catch(err => {
                 console.error("ポケAPIからポケモンの情報を取得する際にエラーが発生しました: ", err);
@@ -95,4 +104,11 @@ window.onload = () => {
                 startButton.disabled = false;
             });
     }
-                 }
+
+    function stopCamera() {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            isScanning = false;
+        }
+    }
+}
