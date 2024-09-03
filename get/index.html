@@ -9,14 +9,12 @@
 <body>
     <div id="container">
         <button id="startButton">カメラを起動</button>
-        <video id="video" style="display: none;"></video>
+        <video id="video"></video>
         <canvas id="canvas" style="display: none;"></canvas>
         <p id="msg">QRコードをスキャンするには、カメラを起動してください。</p>
         <img id="resultImage" style="display: none;" alt="ポケモン画像">
     </div>
-    <!-- jsQRライブラリを先に読み込む -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
-    <!-- スクリプトの読み込み -->
     <script src="script.js"></script>
 </body>
 </html>
