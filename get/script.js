@@ -72,25 +72,20 @@ window.onload = () => {
     }
 
     function showSuccessReaction(data) {
-        // URL文字列を整数に変換
         let id = convertToPokemonID(data);
-        
-        // ポケモンの情報を取得
         fetchPokemonData(id);
     }
 
     function convertToPokemonID(url) {
-        // 文字列から数値を生成
         let sum = 0;
         for (let i = 0; i < url.length; i++) {
             sum += url.charCodeAt(i);
         }
-        // 1から151の間に収める
         return (sum % 151) + 1;
     }
 
     function fetchPokemonData(id) {
-        const apiUrl = `https://pokeapi.co/api/v2/pokemon/${id}`;
+        const apiUrl = `https://pokeapi.co/api/v2/pokemon/${id}/`;
 
         fetch(apiUrl)
             .then(response => {
@@ -101,7 +96,9 @@ window.onload = () => {
             })
             .then(data => {
                 console.log("ポケモンのデータ: ", data);
-                displayPokemonImage(data);
+                fetchJapaneseName(data.name).then(japaneseName => {
+                    displayPokemonImage(data, japaneseName);
+                });
             })
             .catch(error => {
                 console.error("ポケAPIからポケモンの情報を取得する際にエラーが発生しました: ", error);
@@ -110,12 +107,36 @@ window.onload = () => {
             });
     }
 
-    function displayPokemonImage(pokemonData) {
-        const imageUrl = pokemonData.sprites.front_default; // デフォルトのフロント画像を表示
+    function fetchJapaneseName(englishName) {
+        const apiUrl = `https://pokeapi.co/api/v2/pokemon-species/${englishName}/`;
+
+        return fetch(apiUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTPエラー: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                for (let nameInfo of data.names) {
+                    if (nameInfo.language.name === 'ja-Hrkt') {
+                        return nameInfo.name;
+                    }
+                }
+                return "日本語名が見つかりません。";
+            })
+            .catch(error => {
+                console.error("ポケモンの日本語名を取得する際にエラーが発生しました: ", error);
+                return "日本語名が見つかりません。";
+            });
+    }
+
+    function displayPokemonImage(pokemonData, japaneseName) {
+        const imageUrl = pokemonData.sprites.front_default;
         resultImage.src = imageUrl;
         resultImage.style.display = "block";
-        msg.innerText = `ポケモン: ${pokemonData.name} (#${pokemonData.id})`;
-        document.body.style.backgroundColor = "#d4edda"; // 成功の視覚的フィードバック
+        msg.innerText = `ポケモン: ${japaneseName} (#${pokemonData.id})`;
+        document.body.style.backgroundColor = "#d4edda";
         startButton.disabled = false;
     }
 }
