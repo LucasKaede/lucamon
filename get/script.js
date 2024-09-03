@@ -121,9 +121,11 @@ window.onload = () => {
         resultImage.style.display = "block";
         resultImage.style.width = "300px"; // 画像を大きく表示
         resultImage.style.height = "300px"; // 画像を大きく表示
-        resultImage.style.margin = "0 auto"; // 画像を中央に配置
+        resultImage.style.margin = "20px auto"; // 画像を中央に配置
         msg.innerText = `野生のポケモン ${pokemonData.name} (#${pokemonData.id}) が現れた！`;
         
+        alert(`野生のポケモン ${pokemonData.name} が現れた！`); // ポップアップを表示
+
         startButton.disabled = false;
     }
 
