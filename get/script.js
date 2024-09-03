@@ -90,7 +90,7 @@ window.onload = () => {
                 let pokeImage = pokemonData.sprites.front_default;
 
                 // ポケAPIからポケモンの日本語の名前を取得
-                return fetch(`https://pokeapi.co/api/v2/pokemon-species/${number}`)
+                fetch(`https://pokeapi.co/api/v2/pokemon-species/${number}`)
                     .then(response => {
                         if (!response.ok) {
                             throw new Error(`ポケモンの日本語名取得に失敗しました。ステータスコード: ${response.status}`);
@@ -106,6 +106,11 @@ window.onload = () => {
                         resultImage.style.display = "block";
                         msg.innerText = `ポケモン: ${pokeName}`;
                         stopCamera(); // QRコードをスキャンした後にカメラを停止
+                        startButton.disabled = false;
+                    })
+                    .catch(err => {
+                        console.error("ポケAPIからポケモンの日本語名を取得する際にエラーが発生しました: ", err);
+                        msg.innerText = "ポケモン情報の取得に失敗しました。";
                         startButton.disabled = false;
                     });
             })
