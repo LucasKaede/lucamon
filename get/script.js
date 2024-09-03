@@ -6,6 +6,7 @@ window.onload = () => {
     let resultImage = document.getElementById("resultImage");
     let startButton = document.getElementById("startButton");
     let isScanning = false;
+    let stream = null; // カメラストリームを保持
 
     startButton.addEventListener("click", () => {
         if (!isScanning) {
@@ -16,7 +17,8 @@ window.onload = () => {
 
     function startCamera() {
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-            .then((stream) => {
+            .then((videoStream) => {
+                stream = videoStream;
                 video.srcObject = stream;
                 video.setAttribute("playsinline", true); // iOS対応
                 video.play();
@@ -41,12 +43,11 @@ window.onload = () => {
             let code = jsQR(img.data, img.width, img.height, { inversionAttempts: "dontInvert" });
 
             if (code) {
-                console.log("QRコードが検出されました: ", code.data); // QRコードのデータをログ
+                console.log("QRコードが検出されました: ", code.data);
                 drawRect(code.location); // QRコードの場所に矩形を描画
-                msg.innerText = `QRコードを検出しました: ${code.data}`; // QRコードのデータを表示
+                msg.innerText = `QRコードを検出しました: ${code.data}`;
                 
-                // QRコードのスキャンが成功した時の追加リアクション
-                showSuccessReaction(code.data);
+                showSuccessReaction(code.data); // QRコードのスキャンが成功した時のリアクションを追加
             } else {
                 msg.innerText = "QRコードを検出中...";
             }
@@ -72,7 +73,10 @@ window.onload = () => {
     }
 
     function showSuccessReaction(data) {
-        // URL文字列を整数に変換
+        // カメラを停止
+        stopCamera();
+        
+        // QRコードから取得したデータを整数に変換してポケモンIDを取得
         let id = convertToPokemonID(data);
         
         // ポケモンの情報を取得
@@ -114,8 +118,19 @@ window.onload = () => {
         const imageUrl = pokemonData.sprites.front_default; // デフォルトのフロント画像を表示
         resultImage.src = imageUrl;
         resultImage.style.display = "block";
-        msg.innerText = `ポケモン: ${pokemonData.name} (#${pokemonData.id})`;
+        resultImage.style.width = "300px"; // 画像を大きく表示
+        resultImage.style.height = "300px"; // 画像を大きく表示
+        resultImage.style.margin = "0 auto"; // 画像を中央に配置
+        msg.innerText = `野生のポケモン ${pokemonData.name} (#${pokemonData.id}) が現れた！`;
+        alert(`野生のポケモン ${pokemonData.name} が現れた！`); // ポップアップを表示
         document.body.style.backgroundColor = "#d4edda"; // 成功の視覚的フィードバック
         startButton.disabled = false;
+    }
+
+    function stopCamera() {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+        }
+        isScanning = false;
     }
 }
