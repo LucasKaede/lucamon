@@ -34,31 +34,31 @@ window.onload = () => {
     }
 
     function startTick() {
-    if (!isScanning) return;
+        if (!isScanning) return;
 
-    if (video.readyState === video.HAVE_ENOUGH_DATA) {
-        canvas.height = video.videoHeight;
-        canvas.width = video.videoWidth;
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        let img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        try {
-            let code = jsQR(img.data, img.width, img.height, { inversionAttempts: "dontInvert" });
-            if (code) {
-                console.log("QRコードが検出されました: ", code.data);
-                drawRect(code.location); // QRコードの場所に矩形を描画
-                msg.innerText = `QRコードを検出しました: ${code.data}`;
-                
-                showSuccessReaction(code.data); // QRコードのスキャンが成功した時のリアクションを追加
-            } else {
-                msg.innerText = "QRコードを検出中...";
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            canvas.height = video.videoHeight;
+            canvas.width = video.videoWidth;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            let img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            try {
+                let code = jsQR(img.data, img.width, img.height, { inversionAttempts: "dontInvert" });
+                if (code) {
+                    console.log("QRコードが検出されました: ", code.data);
+                    drawRect(code.location); // QRコードの場所に矩形を描画
+                    msg.innerText = `QRコードを検出しました: ${code.data}`;
+                    
+                    showSuccessReaction(code.data); // QRコードのスキャンが成功した時のリアクションを追加
+                } else {
+                    msg.innerText = "QRコードを検出中...";
+                }
+            } catch (error) {
+                console.error("jsQRの処理中にエラーが発生しました: ", error);
             }
-        } catch (error) {
-            console.error("jsQRの処理中にエラーが発生しました: ", error);
         }
-    }
 
-    setTimeout(startTick, 250);
-}
+        setTimeout(startTick, 250);
+    }
 
     function drawRect(location) {
         drawLine(location.topLeftCorner, location.topRightCorner);
