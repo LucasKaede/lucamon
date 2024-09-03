@@ -78,29 +78,35 @@ window.onload = () => {
         let number = Math.floor(Math.abs(parseInt(data)) % 151) + 1;
 
         // ポケAPIからポケモンの情報を取得
-        fetch(`https://pokeapi.co/api/v2/pokemon-species/${number}`)
+        fetch(`https://pokeapi.co/api/v2/pokemon/${number}`)
             .then(response => response.json())
-            .then(pokemonSpeciesData => {
-                // 日本語の名前を取得
-                let pokeName = pokemonSpeciesData.names.find(name => name.language.name === "ja").name;
-                
-                // ポケモンの画像を取得
-                return fetch(`https://pokeapi.co/api/v2/pokemon/${number}`)
+            .then(pokemonData => {
+                // ポケモンの画像URLを取得
+                let pokeImage = pokemonData.sprites.front_default;
+
+                // ポケAPIからポケモンの日本語の名前を取得
+                fetch(`https://pokeapi.co/api/v2/pokemon-species/${number}`)
                     .then(response => response.json())
-                    .then(pokemonData => {
-                        let pokeImage = pokemonData.sprites.front_default;
-                        
+                    .then(pokemonSpeciesData => {
+                        // 日本語の名前を取得
+                        let pokeName = pokemonSpeciesData.names.find(name => name.language.name === "ja").name;
+
                         // ページにポケモンの情報を表示
                         resultImage.src = pokeImage;
                         resultImage.style.display = "block";
                         msg.innerText = `ポケモン: ${pokeName}`;
                         stopCamera(); // QRコードをスキャンした後にカメラを停止
                         startButton.disabled = false;
+                    })
+                    .catch(err => {
+                        console.error("ポケAPIからポケモンの日本語名を取得する際にエラーが発生しました: ", err);
+                        msg.innerText = "ポケモンの名前情報の取得に失敗しました。";
+                        startButton.disabled = false;
                     });
             })
             .catch(err => {
-                console.error("ポケAPIからポケモンの情報を取得する際にエラーが発生しました: ", err);
-                msg.innerText = "ポケモン情報の取得に失敗しました。";
+                console.error("ポケAPIからポケモンの画像を取得する際にエラーが発生しました: ", err);
+                msg.innerText = "ポケモン画像の取得に失敗しました。";
                 startButton.disabled = false;
             });
     }
