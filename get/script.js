@@ -105,7 +105,8 @@ window.onload = () => {
             })
             .catch(error => {
                 console.error("ポケAPIからポケモンの情報を取得する際にエラーが発生しました: ", error);
-                msg.innerText = "ポケモンの情報を取得できませんでした。";
+                msg.innerText = `ポケモンの情報を取得できませんでした (ID: ${id})。`;
+                startButton.disabled = false;
             });
     }
 
