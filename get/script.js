@@ -21,6 +21,7 @@ window.onload = () => {
                 stream = videoStream;
                 video.srcObject = stream;
                 video.setAttribute("playsinline", true); // iOS対応
+                video.style.display = "block";
                 video.play();
                 isScanning = true;
                 startTick();
@@ -123,7 +124,7 @@ window.onload = () => {
         resultImage.style.margin = "0 auto"; // 画像を中央に配置
         msg.innerText = `野生のポケモン ${pokemonData.name} (#${pokemonData.id}) が現れた！`;
         alert(`野生のポケモン ${pokemonData.name} が現れた！`); // ポップアップを表示
-        document.body.style.backgroundColor = "#d4edda"; // 成功の視覚的フィードバック
+
         startButton.disabled = false;
     }
 
@@ -132,5 +133,6 @@ window.onload = () => {
             stream.getTracks().forEach(track => track.stop());
         }
         isScanning = false;
+        video.style.display = "none"; // カメラ映像を非表示
     }
 }
