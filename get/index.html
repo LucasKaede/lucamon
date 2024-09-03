@@ -27,7 +27,8 @@
         }
         #resultImage {
             display: none;
-            max-width: 100%;
+            width: 100%;
+            height: auto;
             margin-top: 10px;
             border: 2px solid #000;
         }
@@ -44,6 +45,12 @@
         }
         #startButton:hover {
             background-color: #0056b3;
+        }
+        @media (max-width: 600px) {
+            #resultImage {
+                width: 90%;
+                height: auto;
+            }
         }
     </style>
 </head>
