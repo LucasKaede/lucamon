@@ -6,7 +6,6 @@ window.onload = () => {
     let resultImage = document.getElementById("resultImage");
     let startButton = document.getElementById("startButton");
     let isScanning = false;
-    let stream; // カメラストリームを保持するための変数
 
     startButton.addEventListener("click", () => {
         if (!isScanning) {
@@ -17,8 +16,7 @@ window.onload = () => {
 
     function startCamera() {
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-            .then((s) => {
-                stream = s; // ストリームを保存
+            .then((stream) => {
                 video.srcObject = stream;
                 video.setAttribute("playsinline", true); // iOS対応
                 video.play();
@@ -46,9 +44,9 @@ window.onload = () => {
                 console.log("QRコードが検出されました: ", code.data); // QRコードのデータをログ
                 drawRect(code.location); // QRコードの場所に矩形を描画
                 msg.innerText = `QRコードを検出しました: ${code.data}`; // QRコードのデータを表示
-
+                
                 // QRコードのスキャンが成功した時の追加リアクション
-                handleQRCodeData(code.data);
+                showSuccessReaction(code.data);
             } else {
                 msg.innerText = "QRコードを検出中...";
             }
@@ -73,74 +71,50 @@ window.onload = () => {
         ctx.stroke();
     }
 
-    function handleQRCodeData(data) {
-        // QRコードのデータから1から151の間の整数を取得
-        let number = Math.floor(Math.abs(parseInt(data)) % 151) + 1;
-
-        // ポップアップを表示
-        alert("野生のポケモンがあらわれた！");
-
-        // カメラを停止
-        stopCamera();
-
-        // ポケAPIからポケモンの情報を取得（リトライ機能付き）
-        fetchWithRetry(`https://pokeapi.co/api/v2/pokemon/${number}`, 3)
-            .then(pokemonData => {
-                // ポケモンの画像URLを取得
-                let pokeImage = pokemonData.sprites.front_default;
-
-                // ポケAPIからポケモンの日本語の名前を取得
-                fetchWithRetry(`https://pokeapi.co/api/v2/pokemon-species/${number}`, 3)
-                    .then(pokemonSpeciesData => {
-                        // 日本語の名前を取得
-                        let pokeName = pokemonSpeciesData.names.find(name => name.language.name === "ja").name;
-
-                        // ページにポケモンの情報を表示
-                        resultImage.src = pokeImage;
-                        resultImage.style.display = "block";
-                        msg.innerText = `ポケモン: ${pokeName}`;
-                        startButton.disabled = false;
-                    })
-                    .catch(err => {
-                        console.error("ポケAPIからポケモンの日本語名を取得する際にエラーが発生しました: ", err);
-                        msg.innerText = "ポケモン情報の取得に失敗しました。";
-                        startButton.disabled = false;
-                    });
-            })
-            .catch(err => {
-                console.error("ポケAPIからポケモンの情報を取得する際にエラーが発生しました: ", err);
-                msg.innerText = "ポケモン情報の取得に失敗しました。";
-                startButton.disabled = false;
-            });
+    function showSuccessReaction(data) {
+        // URL文字列を整数に変換
+        let id = convertToPokemonID(data);
+        
+        // ポケモンの情報を取得
+        fetchPokemonData(id);
     }
 
-    function stopCamera() {
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-            isScanning = false;
+    function convertToPokemonID(url) {
+        // 文字列から数値を生成
+        let sum = 0;
+        for (let i = 0; i < url.length; i++) {
+            sum += url.charCodeAt(i);
         }
+        // 1から151の間に収める
+        return (sum % 151) + 1;
     }
 
-    function fetchWithRetry(url, retries) {
-        return fetch(url)
+    function fetchPokemonData(id) {
+        const apiUrl = `https://pokeapi.co/api/v2/pokemon/${id}`;
+
+        fetch(apiUrl)
             .then(response => {
                 if (!response.ok) {
-                    if (retries > 1) {
-                        console.log(`再試行中: ${url} 残り回数: ${retries - 1}`);
-                        return fetchWithRetry(url, retries - 1);
-                    } else {
-                        throw new Error(`HTTPエラー: ${response.status}`);
-                    }
+                    throw new Error(`HTTPエラー: ${response.status}`);
                 }
                 return response.json();
             })
-            .catch(err => {
-                if (retries > 1) {
-                    console.log(`再試行中: ${url} 残り回数: ${retries - 1}`);
-                    return fetchWithRetry(url, retries - 1);
-                } else {
-                    throw err;
-                }
+            .then(data => {
+                console.log("ポケモンのデータ: ", data);
+                displayPokemonImage(data);
+            })
+            .catch(error => {
+                console.error("ポケAPIからポケモンの情報を取得する際にエラーが発生しました: ", error);
+                msg.innerText = "ポケモンの情報を取得できませんでした。";
             });
+    }
+
+    function displayPokemonImage(pokemonData) {
+        const imageUrl = pokemonData.sprites.front_default; // デフォルトのフロント画像を表示
+        resultImage.src = imageUrl;
+        resultImage.style.display = "block";
+        msg.innerText = `ポケモン: ${pokemonData.name} (#${pokemonData.id})`;
+        document.body.style.backgroundColor = "#d4edda"; // 成功の視覚的フィードバック
+        startButton.disabled = false;
     }
 }
