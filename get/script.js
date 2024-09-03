@@ -1,32 +1,134 @@
-body {
-    font-family: Arial, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-    background-color: #f0f0f0;
-}
+window.onload = () => {
+    let video = document.getElementById("video");
+    let canvas = document.createElement("canvas");
+    let ctx = canvas.getContext("2d");
+    let msg = document.getElementById("msg");
+    let resultImage = document.getElementById("resultImage");
+    let startButton = document.getElementById("startButton");
+    let isScanning = false;
+    let stream = null; // カメラストリームを保持
 
-#container {
-    text-align: center;
-}
+    startButton.addEventListener("click", () => {
+        if (!isScanning) {
+            startButton.disabled = true;
+            startCamera();
+        }
+    });
 
-#video {
-    display: block;
-    margin: 0 auto;
-    width: 100%;
-    height: auto;
-}
+    function startCamera() {
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+            .then((videoStream) => {
+                stream = videoStream;
+                video.srcObject = stream;
+                video.setAttribute("playsinline", true); // iOS対応
+                video.play();
+                isScanning = true;
+                startTick();
+            })
+            .catch((err) => {
+                console.error("カメラのアクセスに失敗しました: ", err);
+                msg.innerText = "カメラのアクセスに失敗しました。";
+                startButton.disabled = false;
+            });
+    }
 
-#resultImage {
-    display: block;
-    margin: 0 auto;
-    max-width: 100%;
-    max-height: 300px;
-}
+    function startTick() {
+        if (!isScanning) return;
 
-#msg {
-    font-size: 1.2em;
-    margin: 10px 0;
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            canvas.height = video.videoHeight;
+            canvas.width = video.videoWidth;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            let img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            try {
+                let code = jsQR(img.data, img.width, img.height, { inversionAttempts: "dontInvert" });
+                if (code) {
+                    drawRect(code.location); // QRコードの場所に矩形を描画
+                    msg.innerText = `QRコードを検出しました: ${code.data}`;
+                    
+                    showSuccessReaction(code.data); // QRコードのスキャンが成功した時のリアクションを追加
+                } else {
+                    msg.innerText = "QRコードを検出中...";
+                }
+            } catch (error) {
+                console.error("jsQRの処理中にエラーが発生しました: ", error);
+            }
+        }
+
+        setTimeout(startTick, 250);
+    }
+
+    function drawRect(location) {
+        drawLine(location.topLeftCorner, location.topRightCorner);
+        drawLine(location.topRightCorner, location.bottomRightCorner);
+        drawLine(location.bottomRightCorner, location.bottomLeftCorner);
+        drawLine(location.bottomLeftCorner, location.topLeftCorner);
+    }
+
+    function drawLine(begin, end) {
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = "#FF3B58";
+        ctx.beginPath();
+        ctx.moveTo(begin.x, begin.y);
+        ctx.lineTo(end.x, end.y);
+        ctx.stroke();
+    }
+
+    function showSuccessReaction(data) {
+        stopCamera();
+        
+        // QRコードから取得したデータを整数に変換してポケモンIDを取得
+        let id = convertToPokemonID(data);
+        
+        // ポケモンの情報を取得
+        fetchPokemonData(id);
+    }
+
+    function convertToPokemonID(url) {
+        // 文字列から数値を生成
+        let sum = 0;
+        for (let i = 0; i < url.length; i++) {
+            sum += url.charCodeAt(i);
+        }
+        // 1から151の間に収める
+        return (sum % 151) + 1;
+    }
+
+    function fetchPokemonData(id) {
+        const apiUrl = `https://pokeapi.co/api/v2/pokemon/${id}`;
+
+        fetch(apiUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTPエラー: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                displayPokemonImage(data);
+            })
+            .catch(error => {
+                console.error("ポケAPIからポケモンの情報を取得する際にエラーが発生しました: ", error);
+                msg.innerText = `ポケモンの情報を取得できませんでした (ID: ${id})。`;
+                startButton.disabled = false;
+            });
+    }
+
+    function displayPokemonImage(pokemonData) {
+        const imageUrl = pokemonData.sprites.front_default; // デフォルトのフロント画像を表示
+        resultImage.src = imageUrl;
+        resultImage.style.display = "block";
+        msg.innerText = `野生のポケモン ${pokemonData.name} (#${pokemonData.id}) が現れた！`;
+        alert(`野生のポケモン ${pokemonData.name} が現れた！`); // ポップアップを表示
+
+        startButton.disabled = false;
+    }
+
+    function stopCamera() {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+        }
+        isScanning = false;
+        video.style.display = "none"; // カメラ映像を非表示
+    }
 }
